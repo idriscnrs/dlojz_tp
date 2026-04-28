@@ -1,0 +1,5 @@
+# Folders
+.ipynb_checkpoints
+__pycache__/
+core-python*
+slurm/
