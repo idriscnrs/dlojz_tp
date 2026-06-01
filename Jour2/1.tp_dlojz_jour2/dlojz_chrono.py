@@ -1,13 +1,13 @@
 from datetime import datetime
 from time import time
 import numpy as np
-from pynvml.smi import nvidia_smi
+from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetPowerUsage, nvmlShutdown
 import json
 
 ###############################
-#Author : Bertrand CABOT from IDRIS(CNRS)
-#
-########################
+# Author : Bertrand CABOT from IDRIS(CNRS)
+# Revisions: Leo MANTEGAZZA from IDRIS (CNRS)
+# #######################
 
 
 class Chronometer:
@@ -77,12 +77,11 @@ class Chronometer:
         self.start_valid = None
         self.val_time = None
         self.time_point = None
-        self.nvsmi = nvidia_smi.getInstance()
         
     def power_measurement(self):
-        powerquery = self.nvsmi.DeviceQuery('power.draw')['gpu']
-        for g in range(len(powerquery)):
-            self.power.append(powerquery[g]['power_readings']['power_draw'])
+        nvmlInit()
+        self.power.append(nvmlDeviceGetPowerUsage(nvmlDeviceGetHandleByIndex(0))/1000)
+        nvmlShutdown()
     
     def tac_time(self, clear=False):
         if self.time_point == None or clear:

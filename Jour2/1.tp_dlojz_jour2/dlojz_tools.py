@@ -628,7 +628,7 @@ def comm_profiler(jobid, n_display=None, zoom=False):
                 
             elif "Init COMPLETE" in line:
                 trace = line.split()
-                comm_rank[trace[5]] = int(trace[7])
+                comm_rank[trace[6]] = int(trace[8])
                 
             elif "Train step" in line:
                 step = int(line.split()[2])
