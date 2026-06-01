@@ -528,30 +528,32 @@ def turbo_profiler(jobid, dataloader_info=False):
     with open(log_out, "r") as f:
         for line in f:
             if "Training complete" in line: 
-                time = line.split(' ')[-1].split('\n')[0]
-                training_time = float(time.split(':')[1])*60 + float(time.split(':')[2])
-            if "Training performance" in line: 
+                #time = line.split(' ')[-1].split('\n')[0]
+                #training_time = float(time.split(':')[1])*60 + float(time.split(':')[2])
+                time = line.split(' ')[-1].replace('\n', '')
+                training_time = numpy.dot(time.split(':')[1:], [60, 1])
+            elif "Training performance" in line: 
                 it_time = float(line.split(' ')[-4])
-            if "Loading performance" in line:
+            elif "Loading performance" in line:
                 load_time = float(line.split(' ')[-4])
-            if "JSON" in line:
+            elif "JSON" in line:
                 perf = json.loads(line.split('>>>JSON ')[-1])
-            if dataloader_info and "DATALOADER" in line:
+            elif dataloader_info and "DATALOADER" in line:
                 num_workers = line.split(' ')[1]
                 persistent_workers = line.split(' ')[2]
                 pin_memory = line.split(' ')[3]
                 non_blocking = line.split(' ')[4]
                 prefetch_factor = line.split(' ')[5]
                 drop_last = line.split(' ')[6]
-            if dataloader_info and "VmHWM" in line:
-                cpu_mem_usage = int(line.split(' ')[-2])/2**20
-            if dataloader_info and ">>> First step loading" in line:
+            elif dataloader_info and "VmHWM" in line:
+                cpu_mem_usage = int(line.split(' ')[-2])/(1024**2)
+            elif dataloader_info and ">>> First step loading" in line:
                 first_step_load_time = line.split(' ')[-1]
                 
     print(f"\033[1m>>> Turbo Profiler >>>\033[0m Training complete in {training_time} s")
     pd.DataFrame(perf).plot(kind='bar', figsize=(18, 4))
     if dataloader_info:
-        plt.title(f'>>> Turbo Profiler >>> CPU Memory Usage: {cpu_mem_usage} GB', fontsize=16)
+        plt.title(f'>>> Turbo Profiler >>> CPU Memory Usage: {cpu_mem_usage:.3f} GB', fontsize=16)
     else:
         plt.title('>>> Turbo Profiler >>>', fontsize=16)
     plt.xlabel('Iterations', fontsize=14)

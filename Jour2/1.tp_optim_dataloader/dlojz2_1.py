@@ -52,7 +52,7 @@ def train():
     parser.add_argument('--mom', default=0.9, type=float,                                                     
                         help='momentum')                                                                      
     parser.add_argument('--test', default=False, action='store_true',
-                        help='Test 50 iterations')                                                            
+                        help='test a number of iterations')                                                            
     parser.add_argument('--test-nsteps', default='50', type=int,                                              
                         help='the number of steps in test mode')                                              
     parser.add_argument('--num-workers', default=8, type=int,                                                
@@ -188,7 +188,7 @@ def train():
         if idr_torch.rank == 0: chrono.tac_time(clear=True)
         for i, (images, labels) in enumerate(train_loader):    
 
-            csteps = i + 1 + epoch * N_batch
+            csteps = (i+1) + (epoch*N_batch)
             if args.test and csteps > args.test_nsteps: break
             if args.test: print(f'Train step {csteps} - rank {idr_torch.rank}')
             if i == 0 and idr_torch.rank == 0:
@@ -236,7 +236,7 @@ def train():
  
                 chrono.validation()
                 model.eval()
-                if args.test: print(f'Train step 100 - rank {idr_torch.rank}')
+                if args.test: print(f'Validation step - rank {idr_torch.rank}')
 
                 for iv, (val_images, val_labels) in enumerate(val_loader): 
 
@@ -288,7 +288,6 @@ def train():
         print("checkpoint saves: " + checkpoint_path)
 
 if __name__ == '__main__':
-    
     # display info
     if idr_torch.rank == 0:
         print(">>> Training on ", len(idr_torch.nodelist), " nodes and ", idr_torch.size, " processes")

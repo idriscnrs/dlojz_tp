@@ -77,11 +77,12 @@ class Chronometer:
         self.start_valid = None
         self.val_time = None
         self.time_point = None
+        nvmlInit()
         
     def power_measurement(self):
-        nvmlInit()
+        #nvmlInit()
         self.power.append(nvmlDeviceGetPowerUsage(nvmlDeviceGetHandleByIndex(0))/1000)
-        nvmlShutdown()
+        #nvmlShutdown()
     
     def tac_time(self, clear=False):
         if self.time_point == None or clear:
