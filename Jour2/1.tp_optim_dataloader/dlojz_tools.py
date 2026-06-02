@@ -538,8 +538,8 @@ def turbo_profiler(jobid, dataloader_info=False):
             if "Training complete" in line: 
                 #time = line.split(' ')[-1].split('\n')[0]
                 #training_time = float(time.split(':')[1])*60 + float(time.split(':')[2])
-                time = line.split(' ')[-1].replace('\n', '')
-                training_time = numpy.dot(time.split(':')[1:], [60, 1])
+                time = line.replace('\n','').split(':')
+                training_time = float(time[-2])*60 + float(time[-1])
             elif "Training performance" in line: 
                 it_time = float(line.split(' ')[-4])
             elif "Loading performance" in line:

@@ -3,3 +3,6 @@
 __pycache__/
 core-python*
 slurm/
+
+# Files
+changements_maj_2026.txt
