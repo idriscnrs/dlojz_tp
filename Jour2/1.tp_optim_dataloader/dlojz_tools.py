@@ -41,38 +41,38 @@ def controle_technique(jobid):
                 it_time = float(line.split(' ')[-4])
                 it_time_std = float(line.split(' ')[-1][:-2])
                 it_time_min = float(line.split(' ')[-6])
-            if "Loading performance" in line: 
+            elif "Loading performance" in line: 
                 load_time = float(line.split(' ')[-4])
                 load_time_std = float(line.split(' ')[-1][:-2])
                 load_time_min = float(line.split(' ')[-6])
-            if "Forward performance" in line: 
+            elif "Forward performance" in line: 
                 for_time = float(line.split(' ')[-4])
-            if "Backward performance" in line: 
+            elif "Backward performance" in line: 
                 back_time = float(line.split(' ')[-4])
-            if "batch per epoch" in line: 
+            elif "batch per epoch" in line: 
                 n_batch = float(line.split(' ')[-1])
-            if ">>> Validation time:" in line: 
+            elif ">>> Validation time:" in line: 
                 val_time = float(line.split(':')[-1])
-            if ">>> Training on " in line:
+            elif ">>> Training on " in line:
                 gpu = line.split()[-2]
-            if "global batch size" in line:
+            elif "global batch size" in line:
                 bs = line.split()[3]
-            if "Optimizer:" in line:
+            elif "Optimizer:" in line:
                 write_optim=True
                 optim = line.split(':')[-1] + '<br>'
-            elif write_optim:
+            elif write_optim: # Store the next few lines pertaining to the optimizer
                 optim = optim + line + '<br>'
                 if ')' in line and '(' not in line:
                     write_optim=False
-            if 'optimizer_name' in line:
+            elif 'optimizer_name' in line:
                 optim = line.split('  ')[-1]
-            if 'optimizer_params' in line:
+            elif 'optimizer_params' in line:
                 optim = optim + '<br>' + ('<br>').join(line.split('  ')[-1].split('. ')[-1].split(', '))
-            if 'scheduler_name' in line:
+            elif 'scheduler_name' in line:
                 optim = optim + '<br>' + line.split('  ')[-1]
-            if 'scheduler_params' in line:
+            elif 'scheduler_params' in line:
                 optim = optim + '<br>' + ('<br>').join(line.split('  ')[-1].split('. ')[-1].split(', '))
-            if 'Peak Power during training' in line:
+            elif 'Peak Power during training' in line:
                 power = line.split()[-2].split('.')[0]
             
                 
@@ -99,27 +99,47 @@ def controle_technique(jobid):
         
         
             
+    # Create the speedometer figure
+    fig = go.Figure(
+            go.Indicator(
+                domain = {'x': [0, 0.5], 'y': [0, 1]},
+                value = throughput_tot,
+                mode = "gauge+number",
+                title = {'text': "Images/second"},
+                gauge = {
+                    'axis': {'range': [None, 10000]},
+                     'steps' : [
+                     {'range': [0, 1200], 'color': "lightgray"},
+                     {'range': [1200, 2800], 'color': "gray"}],
+                 #'threshold' : {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': 3000}
+                        }
+                ),
+            layout=layout
+            )
     
-    fig = go.Figure(go.Indicator(
-    domain = {'x': [0, 0.5], 'y': [0, 1]},
-    value = throughput_tot,
-    mode = "gauge+number",
-    title = {'text': "Images/second"},
-    gauge = {'axis': {'range': [None, 10000]},
-             'steps' : [
-                 {'range': [0, 1200], 'color': "lightgray"},
-                 {'range': [1200, 2800], 'color': "gray"}],
-            # 'threshold' : {'line': {'color': "red", 'width': 4}, 'thickness': 0.75, 'value': 3000}
-            }),
-    layout=layout)
-    
+    # Show total power and throughput
+    if power: fig.add_annotation(x=0.25, y=0.5,
+            text=f"{int(power) * int(gpu)} W",
+            showarrow=False,
+            align='center',
+            font=dict(size=28),
+            xanchor='center')
     if throughput: fig.add_annotation(x=0.25, y=0.1,
             text=f"GPU : {throughput/1000:.2f} k",
             showarrow=False,
             align='center',
             font=dict(size=28),
             xanchor='center')
+
+    # Show log filename
+    fig.add_annotation(x=0.5, y=1.2,
+            text=log_out.split('/')[-1].split('.')[0],
+            showarrow=False,
+            align='center',
+            font=dict(size=20),
+            xanchor='center')
     
+    # Show Number of GPUs
     fig.add_layout_image(
         dict(
             source=engine,
@@ -128,7 +148,6 @@ def controle_technique(jobid):
             sizex=.2,
             sizey=.2,
             xanchor='center'))
-
     if bs: fig.add_annotation(x=0.6, y=0.8,
             text=f"{gpu} GPU",
             showarrow=False,
@@ -136,13 +155,7 @@ def controle_technique(jobid):
             font=dict(size=24),
             xanchor='center')
     
-    fig.add_annotation(x=0.5, y=1.2,
-            text=log_out.split('/')[-1].split('.')[0],
-            showarrow=False,
-            align='center',
-            font=dict(size=20),
-            xanchor='center')
-
+    # Show batch size
     fig.add_layout_image(
         dict(
             source=tire,
@@ -151,7 +164,6 @@ def controle_technique(jobid):
             sizex=.2,
             sizey=.2,
             xanchor='center'))
-
     if bs: fig.add_annotation(x=0.9, y=0.8,
             text=f"batch size: {bs}",
             showarrow=False,
@@ -159,33 +171,29 @@ def controle_technique(jobid):
             font=dict(size=24),
             xanchor='center')
 
+    # Show optimizer info
     fig.add_layout_image(
         dict(
             source=steering,
-            x=0.65,
+            x=0.6,
             y=0.6,
             sizex=.2,
             sizey=.2,
             xanchor='center'))
-    if bs: fig.add_annotation(x=0.85, y=0.0,
+    if bs: fig.add_annotation(x=0.75, y=-0.2,
             text=optim,
             showarrow=False,
             font=dict(size=16),
             xanchor='center',
             align='left')
-    if power: fig.add_annotation(x=0.25, y=0.5,
-            text=f"{int(power) * int(gpu)} W",
-            showarrow=False,
-            align='center',
-            font=dict(size=28),
-            xanchor='center')
+
     
     if throughput:
         fig.show()
         print(f'Train throughput: {throughput_tot:.2f} images/second')
         print(f'GPU throughput: {throughput:.2f} images/second')
         print(f'epoch time: {(it_time+load_time)*n_batch:.2f} seconds')
-        #print(f'training time estimation for 90 epochs (with validations): {((it_time+load_time)*n_batch+val_time)*n_epoch/3600:.2f} hours')
+        #print(f'training time estimation for {n_epoch} epochs (with validations): {((it_time+load_time)*n_batch+val_time)*n_epoch/3600:.2f} hours')
         print('-----------')
         print(f'training step time average (fwd/bkwd on GPU): {it_time:.6f} sec ({for_time/it_time*100:.1f}%/{back_time/it_time*100:.1f}%) +/- {it_time_std:.6f}')
         print(f'loading step time average (IO + CPU to GPU transfer): {load_time:.6f} sec +/- {load_time_std:.6f}')
