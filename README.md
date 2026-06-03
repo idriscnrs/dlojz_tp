@@ -1,9 +1,9 @@
 # FORMATION DLO-JZ : Deep Learning optimisé sur Jean Zay
 
-Depôt pour la formation IA avancée dédiée à Jean Zay :)
+Depôt pour la formation IA avancée dédiée à Jean Zay.
 
 ## Supports pédagogiques :
-http://www.idris.fr/formations/dlo-jz/
+[http://www.idris.fr/formations/dlo-jz/](http://www.idris.fr/docs/formations/ia/formation-dlojz)
 
 ## Contenu de la formation :
 
@@ -11,40 +11,7 @@ Cette formation est dédiée au passage à l'échelle multi-GPU de l'entraîneme
 
 ## Plan :
 
-
-### Jour 1
-
-* Accueil
-* Présentation de la formation DLO-JZ
-* Le supercalculateur Jean Zay
-* Les enjeux de la montée à l'échelle
-* L'accélération GPU
-* La précision mixte
-* L'optimisation des formats de tenseur (channels last memory format)
-* Profilage de code
-
-### Jour 2
-
-* Optimisation du prétraitement des données sur CPU (DataLoader)
-* Entraînement distribué : notions générales et parallélisme de données
-
-
-### Jour 3
-
-* Le stockage et le format des données d'entrée (webdataset)
-* Entraînement large batches (learning rate scheduler, optimiseurs large batches,…)
-* JIT (torch.compile)
-
-
-### Jour 4
-
-* Les bonnes pratiques
-* Gros modèles
-* FSDP
-* Les parallélismes de modèle
-* Les API pour les parallélismes de modèle
-* Les outils de visualisation et suivi d'expériences
-* Les techniques d'optimisation de recherche des hyperparamètres
+A venir
 
 ### Quizz
 * [TP1_0](https://www.deepmama.com/quizz/dlojz_quizz1.html)
@@ -64,10 +31,11 @@ Les parties pratiques se dérouleront sur le supercalculateur Jean Zay de l'IDRI
 
 ## Intervenants :
 
-- Bertrand Cabot
-- Martin Comminges
-- Kamel Guerda
-- Léo Hunout
+- Martin COMMINGES
+- Stéphane ILLIC
+- Léo MANTEGAZZA
+- Myriam PEYROUNETTE
+- Florian SABY
 
 ## S’inscrire à cette formation :
 https://cours.idris.fr
