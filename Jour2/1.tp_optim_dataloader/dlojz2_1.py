@@ -38,34 +38,34 @@ def memory_usage():
   print("VmPeak: ",peak," VmHWM: ", hwm)
 
 def train():                                                                                                  
-    parser = argparse.ArgumentParser()                                                                        
-    parser.add_argument('-b', '--batch-size', default=128, type =int,                                         
-                        help='batch size per GPU')                                                            
-    parser.add_argument('-e','--epochs', default=1, type=int,                                                 
-                        help='number of total epochs to run')                                                 
-    parser.add_argument('--image-size', default=224, type=int,                                                
-                        help='Image size')                                                                    
-    parser.add_argument('--lr', default=0.1, type=float,                                                      
-                        help='learning rate')                                                                 
-    parser.add_argument('--wd', default=0., type=float,                                                       
-                        help='weight decay')                                                                  
-    parser.add_argument('--mom', default=0.9, type=float,                                                     
-                        help='momentum')                                                                      
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-b', '--batch-size', default=128, type =int,
+                        help='batch size per GPU')
+    parser.add_argument('-e','--epochs', default=1, type=int,
+                        help='number of total epochs to run')
+    parser.add_argument('--image-size', default=224, type=int,
+                        help='Image size')
+    parser.add_argument('--lr', default=0.1, type=float,
+                        help='learning rate')
+    parser.add_argument('--wd', default=0., type=float,
+                        help='weight decay')
+    parser.add_argument('--mom', default=0.9, type=float,
+                        help='momentum')
     parser.add_argument('--test', default=False, action='store_true',
-                        help='test a number of iterations')                                                            
-    parser.add_argument('--test-nsteps', default='50', type=int,                                              
-                        help='the number of steps in test mode')                                              
-    parser.add_argument('--num-workers', default=8, type=int,                                                
+                        help='test a number of iterations')
+    parser.add_argument('--test-nsteps', default='50', type=int,
+                        help='the number of steps in test mode')
+    parser.add_argument('--num-workers', default=8, type=int,
                         help='num workers in dataloader')                                                     
-    parser.add_argument('--persistent-workers', default=True, action=argparse.BooleanOptionalAction,          
-                        help='activate persistent workers in dataloader')                                     
-    parser.add_argument('--pin-memory', default=True, action=argparse.BooleanOptionalAction,                  
-                        help='activate pin memory option in dataloader')                                      
-    parser.add_argument('--non-blocking', default=True, action=argparse.BooleanOptionalAction,                
-                        help='activate asynchronuous GPU transfer')                                           
-    parser.add_argument('--prefetch-factor', default=2, type=int,                                             
-                        help='prefectch factor in dataloader')                                                
-    parser.add_argument('--drop-last', default=False, action=argparse.BooleanOptionalAction,                  
+    parser.add_argument('--persistent-workers', default=True, action=argparse.BooleanOptionalAction,
+                        help='activate persistent workers in dataloader')
+    parser.add_argument('--pin-memory', default=True, action=argparse.BooleanOptionalAction,
+                        help='activate pin memory option in dataloader')
+    parser.add_argument('--non-blocking', default=True, action=argparse.BooleanOptionalAction,
+                        help='activate asynchronuous GPU transfer')
+    parser.add_argument('--prefetch-factor', default=2, type=int,
+                        help='prefectch factor in dataloader')
+    parser.add_argument('--drop-last', default=False, action=argparse.BooleanOptionalAction,
                         help='activate drop_last option in dataloader')
     parser.add_argument('--chkpt', default=False, action='store_true',
                         help='Save last checkpoint')
