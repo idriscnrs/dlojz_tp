@@ -1,4 +1,4 @@
-## Author : Bertrand Cabot / IDRIS
+# # Author : Bertrand Cabot / IDRIS
 
 import os                                                                                                     
 import contextlib                                                                                                       
@@ -10,23 +10,22 @@ from torch.utils.checkpoint import checkpoint_sequential
 import torch                                                                                                  
 import numpy as np                                     
 import apex
-                                                                                                              
+
 import idr_torch                                                                                              
 from dlojz_chrono import Chronometer
 from torchmetrics.aggregation import MeanMetric
 from torchmetrics.classification import MulticlassAccuracy
-                                                                                                              
+
 import random                                                                                                 
 random.seed(123)                                                                                              
 np.random.seed(123)                                                                                           
 torch.manual_seed(123)                                                                                        
 
 ## import ... ## Add here the libraries to import
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 #TODO: import libraries related to distribution
-import torch.distributed as dist
-from torch.nn.parallel import DistributedDataParallel
-
+from torch.distributed import init_process_group, DistributedSampler
+from torch.nn.parallel import DistributedDataParallel as DDP
 
 VAL_BATCH_SIZE=250
 
@@ -75,8 +74,10 @@ def train():
     
     # configure distribution method: define rank and initialise communication backend (NCCL)
     #TODO: initialize the parallel environment
-    dist.init_process_group(backend='nccl', init_method='env://',
-                            world_size=idr_torch.size, rank=idr_torch.rank)
+    init_process_group(backend="NCCL",
+                       init_method="env://",
+                       world_size=idr_torch.size,
+                       rank=idr_torch.rank)
     
     # define model & device
     #TODO: bind the proper GPU to the current process
@@ -91,9 +92,9 @@ def train():
     if idr_torch.rank == 0: print('number of parameters: {}'.format(sum([p.numel()
                                               for p in model.parameters()])))                                 
     
-    #TODO: switch the model in Distributed Data Parallel mode 
-    #model = torch.nn.SyncBatchNorm.convert_sync_batchnorm(model) #Transform BatchNorm Layers to SyncBatchNorm Layers
-    model = DistributedDataParallel(model, device_ids=[idr_torch.local_rank])
+    #TODO: switch the model in Distributed Data Parallel mode
+    model = DDP(model, device_ids=[idr_torch.local_rank])
+    
 
     # distribute batch size (mini-batch)                                                                      
     num_replica = idr_torch.size                                    
@@ -119,7 +120,7 @@ def train():
     val_metric['acc'] = MulticlassAccuracy(num_classes=1000, average='micro').to(gpu)
     
     # Creates a GradScaler once at the beginning of training.
-    scaler = GradScaler()
+    scaler = GradScaler('cuda')
         
 
     #########  DATALOADER ############ 
@@ -143,22 +144,20 @@ def train():
                                                   transform=transform)
     
     #TODO: define distributed sampler for train_loader and call it in the DataLoader
-    
     train_sampler = torch.utils.data.distributed.DistributedSampler(train_dataset,
                                                                     num_replicas=idr_torch.size,
                                                                     rank=idr_torch.rank,
                                                                     shuffle=True)
     
-    
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=mini_batch_size,
-                                               shuffle=False,
-                                               sampler=train_sampler,
+                                               shuffle=True,
                                                num_workers=args.num_workers,
                                                persistent_workers=args.persistent_workers,
                                                pin_memory=args.pin_memory,
                                                prefetch_factor=args.prefetch_factor,
-                                               drop_last=args.drop_last)
+                                               drop_last=args.drop_last,
+                                               sampler=train_sampler)
     
         
     val_transform = transforms.Compose([
@@ -171,23 +170,21 @@ def train():
     val_dataset = torchvision.datasets.ImageNet(root=os.environ['ALL_CCFRSCRATCH']+'/imagenet', split='val',
                         transform=val_transform)
     
+    
     #TODO: define distributed sampler for val_loader and call it in the DataLoader
-    
     val_sampler = torch.utils.data.distributed.DistributedSampler(val_dataset,
-                                                              num_replicas=idr_torch.size,
-                                                              rank=idr_torch.rank,
-                                                              shuffle=False)
-    
-    
+                                                                  num_replicas=idr_torch.size,
+                                                                  rank=idr_torch.rank,
+                                                                  shuffle=False)
     val_loader = torch.utils.data.DataLoader(dataset=val_dataset,    
                                              batch_size=VAL_BATCH_SIZE,
                                              shuffle=False,
-                                             sampler=val_sampler,
                                              num_workers=args.num_workers,
                                              persistent_workers=args.persistent_workers,
                                              pin_memory=args.pin_memory,
                                              prefetch_factor=args.prefetch_factor,
-                                             drop_last=args.drop_last)
+                                             drop_last=args.drop_last,
+                                             sampler=val_sampler)
     
     N_batch = len(train_loader)
     N_val_batch = len(val_loader)
@@ -205,7 +202,7 @@ def train():
     for epoch in range(args.epochs):
         # TODO set epoch for sampler
         train_sampler.set_epoch(epoch)
-
+        
         if args.test: chrono.next_iter()
         if idr_torch.rank == 0: chrono.tac_time(clear=True)
         for i, (images, labels) in enumerate(train_loader):    
@@ -225,7 +222,7 @@ def train():
 
             optimizer.zero_grad()
             # Implement autocasting
-            with autocast():
+            with autocast('cuda'):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
             
@@ -278,7 +275,7 @@ def train():
                     # Runs the forward pass with no grad mode.
                     with torch.no_grad():
                         # Implement autocasting
-                        with autocast():
+                        with autocast('cuda'):
                             val_outputs = model(val_images)
                             val_loss = criterion(val_outputs, val_labels)
 
@@ -289,6 +286,7 @@ def train():
                                                    
                 val_loss, val_accuracy = val_metric['loss'].compute(), val_metric['acc'].compute()
                 val_metric['loss'].reset(), val_metric['acc'].reset()
+
 
                 model.train()  
                 chrono.validation()   
