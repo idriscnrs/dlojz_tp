@@ -248,7 +248,7 @@ def train():
  
                 chrono.validation()
                 model.eval()
-                if args.test: print(f'Train step 100 - rank {idr_torch.rank}')
+                if args.test: print(f'Validation step - rank {idr_torch.rank}')
 
                 for iv, (val_images, val_labels) in enumerate(val_loader): 
 

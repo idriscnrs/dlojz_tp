@@ -587,7 +587,6 @@ def turbo_profiler(jobid, dataloader_info=False):
                                          #"iteration_time":[float(it_time)+float(load_time)],
         return dataloader_trial
 
-
 def comm_profiler(jobid, n_display=None, zoom=False):
     # jobid can either be a list, a tuple, an int, or a string
     if isinstance(jobid, (list, tuple)):
@@ -614,63 +613,81 @@ def comm_profiler(jobid, n_display=None, zoom=False):
             if ">>> Training on" in line:
                 n_rank = int(line.split()[-2])
                 break
-    steps = ['init.']*n_rank
     
-    comm_rank = {}
+    comm_rank = {} # Stores the global rank for the comm signature
 
     with open(log_out, "r") as f:
         for line in f:
-            if "NCCL INFO" in line and "opCount" in line and "datatype" in line: 
+            if "Init COMPLETE" in line:
+                # The comm signature is always assigned to the same rank 
+                # (e.g.0x5583fd7c2000 will always be rank 0
+                # That way we can map a comm to a rank easily
+                trace = line.split()
+                comm_rank[trace[6]] = int(trace[8]) 
+                steps = ['init.']*n_rank
+                
+            elif "Train step" in line:
+                step = int(line.split()[2])
+                rank = int(line.split()[-1])
+                steps[rank] = f'step {step}'
+
+            elif "Validation step" in line:
+                rank = int(line.split()[-1])
+                steps[rank] = 'valid.'
+            
+            elif "NCCL INFO" in line and "opCount" in line and "datatype" in line:
+                # example line:
+                # 0                              1   2    3    4          5       6 7        8              9        10             11    12     13       14 15 16 17   18 19   20             21         22     23
+                # jean-zay-iam06:3592738:3592738 [2] NCCL INFO Broadcast: opCount 0 sendbuff 0x150068400000 recvbuff 0x150068400000 count 151424 datatype 7  op 0  root 0  comm 0x55e5fb382000 [nranks=4] stream 0x55e5f451eb60
                 coll_trace = line.split()
-                coll_dict['local_rank'].append(int(coll_trace[1][1:-1]))
-                coll_dict['coll_operation'].append(coll_trace[4][:-1])
-                coll_dict['opCount'].append(int(coll_trace[6], 16))
-                comm = coll_trace[20]
+                comm = coll_trace[20] # Comm signature
                 coll_dict['comm'].append(comm)
+                coll_dict['train_step'].append(steps[comm_rank[comm]]) # On n'utilise pas le rang local mais global, qui est seulement donné par la signature de la communication.
+                coll_dict['local_rank'].append(int(coll_trace[1][1:-1]))
+                coll_dict['coll_operation'].append(coll_trace[4].replace(":",""))
+                coll_dict['opCount'].append(int(coll_trace[6], 16)) # Variable interne à NCCL. La valeur est en hexadécimal
+                coll_dict['sendbuff'].append(coll_trace[8])
+                coll_dict['recvbuff'].append(coll_trace[10])
                 coll_dict['Count'].append(np.int64(coll_trace[12]))
                 coll_dict['datatype'].append(np.int32(coll_trace[14]))
                 coll_dict['op'].append(np.int32(coll_trace[16]))
                 coll_dict['root'].append(np.int32(coll_trace[18]))
                 coll_dict['stream'].append(coll_trace[23])
-                coll_dict['sendbuff'].append(coll_trace[8])
-                coll_dict['recvbuff'].append(coll_trace[10])
-                coll_dict['train_step'].append(steps[comm_rank[comm]])
-                
-            elif "Init COMPLETE" in line:
-                trace = line.split()
-                comm_rank[trace[6]] = int(trace[8])
-                
-            elif "Train step" in line:
-                step = int(line.split()[2])
-                rank = int(line.split()[-1])
-                steps[rank] = 'init.' if step==0 else 'valid.' if step==100 else f'step {step}'
+    
                 
                         
     df = pd.DataFrame(coll_dict)
+    # Only keep the init., validation and first 10 steps 
     df = df[df.train_step.isin(['init.', 'valid.']+[f'step {i}'for i in np.arange(10)+1])]
-    df['global_rank'] = [comm_rank[c] for c in df.comm]
+    df['global_rank'] = df.comm.apply(lambda c: comm_rank[c])
     df = df.set_index('opCount').sort_index()
-    
-    df.loc[df[df.datatype.isin([2,3,7])].index, 'Count'] *= 4
-    df.loc[df[df.datatype.isin([4,5,8])].index, 'Count'] *= 8
-    df.loc[df[df.datatype.isin([6,9])].index, 'Count'] *= 2
+
+    # "Count" correspond au nombre d'éléments impliqués dans l'opération. 
+    # En fonction du type de donnée de l'élément il faut le multiplier
+    # par le nombre d'octets impliqués pour obtenir le volume des communications. 
+    # La correspondance est donnée dans le dictionnaire 'nccldtype' plus bas.
+    df['Volume'] = df.Count.copy()
+    df['Volume'] = np.where(df.datatype.isin([6,9]), df.Count*2, df.Volume)
+    df['Volume'] = np.where(df.datatype.isin([2,3,7]), df.Count*4, df.Volume)
+    df['Volume'] = np.where(df.datatype.isin([4,5,8]), df.Count*8, df.Volume)
+    #nccldtype = {0: 'ncclInt8',
+    #          1: 'ncclUint8',
+    #          2: 'ncclInt32',
+    #          3: 'ncclUint32',
+    #          4: 'ncclInt64',
+    #          5: 'ncclUint64',
+    #          6: 'ncclFloat16',
+    #          7: 'ncclFloat32',
+    #          8: 'ncclFloat64',
+    #          9: 'ncclBfloat16',
+    #          10: 'ncclNumTypes'
+    #        }
     
     dico = {}
     for r in np.sort(df.global_rank.unique()):
-        dico[f'rank: {r}'] = df[df.global_rank==r].Count
-    nccldtype = { 0: 'ncclInt8',
-              1: 'ncclUint8',
-              2: 'ncclInt32',
-              3: 'ncclUint32',
-              4: 'ncclInt64',
-              5: 'ncclUint64',
-              6: 'ncclFloat16',
-              7: 'ncclFloat32',
-              8: 'ncclFloat64',
-              9: 'ncclBfloat16',
-              10: 'ncclNumTypes'
-            }
-    dico['operations'] = df[df.global_rank==0].train_step + ' - ' + df[df.global_rank==0].coll_operation #+ ' - (' + df[df.global_rank==0].datatype.replace(nccldtype) + ')'
+        dico[f'rank: {r}'] = df[df.global_rank==r].Volume
+    
+    dico['operations'] = df[df.global_rank==0].train_step + ' - ' + df[df.global_rank==0].coll_operation
     dfplot = pd.DataFrame(dico)
     dfplot = dfplot.set_index('operations')
     if zoom:
@@ -685,10 +702,12 @@ def comm_profiler(jobid, n_display=None, zoom=False):
             dfplot.iloc[-n_display:].plot.bar(figsize=(15, 2), rot=90, title=f'Collective Communication Profiler - Nbr of operations: {len(df)}', ylabel='communications Bytes')
         else:
             dfplot.plot.bar(figsize=(15, 2), rot=90, title=f'Collective Communication Profiler - Nbr of operations: {len(df)}', ylabel='communications Bytes')
-    dfplot = dfplot.groupby('operations', sort=False).sum()
-    if not zoom: dfplot.plot.bar(figsize=(15, 2), rot=90, title=f'Aggregate Collective Communication Profiler - global count: {df.Count.sum()} Bytes', ylabel='communications Bytes')
+    dfgroup = dfplot.groupby('operations', sort=False).sum()
+    if not zoom: dfgroup.plot.bar(figsize=(15, 2), rot=90, title=f'Aggregate Collective Communication Profiler - global count: {df.Count.sum()/1e9:.2f} GBytes', ylabel='communications Bytes')
     
     plt.show()
+
+    return dfplot
     
     
 def BatchNorm_view(jobid, model, labels=None):

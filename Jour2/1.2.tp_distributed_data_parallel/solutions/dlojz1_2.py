@@ -24,7 +24,8 @@ torch.manual_seed(123)
 ## import ... ## Add here the libraries to import
 from torch.amp import autocast, GradScaler
 #TODO: import libraries related to distribution
-from torch.distributed import init_process_group, DistributedSampler
+from torch.distributed import init_process_group
+from torch.utils.data import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
 VAL_BATCH_SIZE=250
@@ -151,7 +152,7 @@ def train():
     
     train_loader = torch.utils.data.DataLoader(dataset=train_dataset,
                                                batch_size=mini_batch_size,
-                                               shuffle=True,
+                                               shuffle=False,
                                                num_workers=args.num_workers,
                                                persistent_workers=args.persistent_workers,
                                                pin_memory=args.pin_memory,
@@ -263,7 +264,7 @@ def train():
  
                 chrono.validation()
                 model.eval()
-                if args.test: print(f'Train step 100 - rank {idr_torch.rank}')
+                if args.test: print(f'Validation step - rank {idr_torch.rank}')
 
                 for iv, (val_images, val_labels) in enumerate(val_loader): 
 
