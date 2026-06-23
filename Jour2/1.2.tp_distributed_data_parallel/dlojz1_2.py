@@ -285,7 +285,9 @@ def train():
             
             if args.test: chrono.next_iter()
     
-                                                             
+    #TODO: destroy the process group at the end of training to avoid ressource leaks
+    
+    
     chrono.stop()
     if idr_torch.rank == 0:
         chrono.display()

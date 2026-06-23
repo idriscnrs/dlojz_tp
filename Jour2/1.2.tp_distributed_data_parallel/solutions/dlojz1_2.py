@@ -24,7 +24,7 @@ torch.manual_seed(123)
 ## import ... ## Add here the libraries to import
 from torch.amp import autocast, GradScaler
 #TODO: import libraries related to distribution
-from torch.distributed import init_process_group
+from torch.distributed import init_process_group, destroy_process_group
 from torch.utils.data import DistributedSampler
 from torch.nn.parallel import DistributedDataParallel as DDP
 
@@ -300,7 +300,9 @@ def train():
             #### END OF VALIDATION ############
             
             if args.test: chrono.next_iter()
-    
+
+    #TODO: destroy the process group at the end of training to avoid ressource leaks
+    destroy_process_group()
                                                              
     chrono.stop()
     if idr_torch.rank == 0:
