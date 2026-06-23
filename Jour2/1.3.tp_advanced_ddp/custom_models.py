@@ -71,10 +71,10 @@ def resnet152_with_stochastic_depth(p_L: float = 0.5, sd_mode: str = "batch", pr
 
 
 class ClassifierMixture(nn.Module):
-    def __init__(self, in_dim=2048, num_classes=1000, n_heads=3, p_active=0.33, seed=0):
+    def __init__(self, in_dim=2048, num_classes=1000, n_heads=3, seed=0):
         super().__init__()
         self.heads = nn.ModuleList([nn.Linear(in_dim, num_classes) for _ in range(n_heads)])
-        self.p_active = p_active
+        self.p_active = 1/n_heads
         self.g = torch.Generator()
         self.seed = seed
         
