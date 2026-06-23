@@ -1,13 +1,13 @@
 from datetime import datetime
 from time import time
 import numpy as np
-from pynvml.smi import nvidia_smi
+from pynvml import nvmlInit, nvmlDeviceGetCount, nvmlDeviceGetHandleByIndex, nvmlDeviceGetPowerUsage, nvmlShutdown
 import json
 
 ###############################
-#Author : Bertrand CABOT from IDRIS(CNRS)
-#
-########################
+# Author : Bertrand CABOT from IDRIS(CNRS)
+# Revisions: Leo MANTEGAZZA from IDRIS (CNRS)
+# #######################
 
 
 class Chronometer:
@@ -77,12 +77,10 @@ class Chronometer:
         self.start_valid = None
         self.val_time = None
         self.time_point = None
-        self.nvsmi = nvidia_smi.getInstance()
+        nvmlInit()
         
     def power_measurement(self):
-        powerquery = self.nvsmi.DeviceQuery('power.draw')['gpu']
-        for g in range(len(powerquery)):
-            self.power.append(powerquery[g]['power_readings']['power_draw'])
+        self.power.append(nvmlDeviceGetPowerUsage(nvmlDeviceGetHandleByIndex(0))/1000)
     
     def tac_time(self, clear=False):
         if self.time_point == None or clear:
@@ -104,7 +102,7 @@ class Chronometer:
     
     def stop(self):
         self.stop_proc = datetime.now()
-            
+        nvmlShutdown()
     def _dataload(self):
         if self.start_dataload==None: self.start_dataload = time()
         else:
@@ -160,7 +158,8 @@ class Chronometer:
         if len(self.time_perf_backward) > 0: print(">>> Backward performance time: {} seconds (+/- {})".format(np.mean(self.time_perf_backward[1:]), np.std(self.time_perf_backward[1:])))
         if len(self.power) > 0: print(">>> Peak Power during training: {} W)".format(np.max(self.power)))
         if self.val_time: print(">>> Validation time: {}".format(self.val_time))
-        if len(self.time_perf_train) > 0 and len(self.time_perf_load) > 0: 
+        if len(self.time_perf_train) > 0 and len(self.time_perf_load) > 0:
+            print(f">>> First step loading time: {self.time_perf_load[0]}")
             print(">>> Sortie trace #####################################" )
             print(">>>JSON", json.dumps({'GPU process - Forward/Backward':self.time_perf_train, 'CPU process - Dataloader':self.time_perf_load}))
                 
