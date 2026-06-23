@@ -22,7 +22,7 @@ np.random.seed(123)
 torch.manual_seed(123)                                                                                        
 
 ## import ... ## Add here the libraries to import
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
 
@@ -111,7 +111,7 @@ def train():
     val_metric['acc'] = MulticlassAccuracy(num_classes=1000, average='micro').to(gpu)
     
     # Creates a GradScaler once at the beginning of training.
-    scaler = GradScaler()
+    scaler = GradScaler('cuda')
         
 
     #########  DATALOADER ############ 
@@ -212,7 +212,7 @@ def train():
 
             optimizer.zero_grad()
             # Implement autocasting
-            with autocast():
+            with autocast('cuda'):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
             
@@ -258,7 +258,7 @@ def train():
                     # Runs the forward pass with no grad mode.
                     with torch.no_grad():
                         # Implement autocasting
-                        with autocast():
+                        with autocast('cuda'):
                             val_outputs = model(val_images)
                             val_loss = criterion(val_outputs, val_labels)
 
@@ -282,7 +282,8 @@ def train():
             #### END OF VALIDATION ############
             
             if args.test: chrono.next_iter()
-    
+
+    dist.destroy_process_group()
                                                              
     chrono.stop()
     if idr_torch.rank == 0:
