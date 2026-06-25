@@ -1,30 +1,32 @@
 ## Author : Bertrand Cabot / IDRIS
+## Révisions : Léo Mantegazza / IDRIS
 
-import os                                                                                                     
-import contextlib                                                                                                       
-import argparse                                                                                               
-import torchvision                                                                                            
-import torchvision.transforms as transforms                                                                   
-import torchvision.models as models                                                                                        
-from torch.utils.checkpoint import checkpoint_sequential                                                              
-import torch                                                                                                  
+import os
+import contextlib
+import argparse
+import torchvision
+import torchvision.transforms as transforms               
+import torchvision.models as models                            
+from torch.utils.checkpoint import checkpoint_sequential                       
+import torch               
 import numpy as np                                     
 import apex
-                                                                                                              
-import idr_torch                                                                                              
+               
+import idr_torch
 from dlojz_chrono import Chronometer
 from torchmetrics.aggregation import MeanMetric
 from torchmetrics.classification import MulticlassAccuracy
-                                                                                                              
-import random                                                                                                 
-random.seed(123)                                                                                              
-np.random.seed(123)                                                                                           
-torch.manual_seed(123)                                                                                        
+
+import random
+random.seed(123)
+np.random.seed(123)
+torch.manual_seed(123)
 
 ## import ... ## Add here the libraries to import
 from torch.amp import autocast, GradScaler
 import torch.distributed as dist
 from torch.nn.parallel import DistributedDataParallel
+# TODO: Import cutmix transform
 
 
 VAL_BATCH_SIZE=250
@@ -190,6 +192,7 @@ def train():
     
     #### TRAINING ############
     
+    # TODO: Apply customized Data Augmentation on images 
     for epoch in range(args.epochs):
         train_sampler.set_epoch(epoch)
 
@@ -203,7 +206,6 @@ def train():
                 print(f'image batch shape : {images.size()}')
             
             # distribution of images and labels to all GPUs
-            # TODO: Apply customized Data Augmentation on images 
             images = images.to(gpu, non_blocking=args.non_blocking, memory_format=torch.channels_last)
             labels = labels.to(gpu, non_blocking=args.non_blocking)
 

@@ -9,12 +9,12 @@ import torch.nn.init as init
 import numpy as np
 import torch
 
+#TODO : add the device parameter
 def mixup_data(x, y=None, num_classes=1000, alpha=1., device=None):
 
     '''Compute the mixup data. Return mixed inputs, pairs of targets, and lambda'''
     batch_size = x.size()[0]
     
-    #TODO : add the device parameter
     # Get lambda values for each sample in batch
     _lambda = torch.tensor(np.random.beta(alpha, alpha, batch_size).astype('float32'), device=device)
     # Randomly permute the order of the batch to mix 2 samples of the batch : the ordered ones and the the permuted ones 

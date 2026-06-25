@@ -1,4 +1,5 @@
 ## Author : Bertrand Cabot / IDRIS
+## Revisions : Léo Mantegazza / IDRIS
 
 import os                                                                                                     
 import contextlib                                                                                                       
