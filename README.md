@@ -3,7 +3,7 @@
 Depôt pour la formation IA avancée dédiée à Jean Zay.
 
 ## Supports pédagogiques :
-[http://www.idris.fr/formations/dlo-jz/](http://www.idris.fr/docs/formations/ia/formation-dlojz)
+http://www.idris.fr/docs/formations/ia/formation-dlojz
 
 ## Contenu de la formation :
 
