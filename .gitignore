@@ -3,3 +3,10 @@
 __pycache__/
 core-python*
 slurm/
+experiments/
+checkpoints/
+basescripts/
+
+# Files
+changements_maj_2026.txt
+compare.html
