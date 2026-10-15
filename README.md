@@ -14,11 +14,8 @@ Cette formation est dédiée au passage à l'échelle multi-GPU de l'entraîneme
 A venir
 
 ### Quizz
-* [TP1_0](https://www.deepmama.com/quizz/dlojz_quizz1.html)
-* [TP1_1](https://www.deepmama.com/quizz/dlojz_quizz2.html)
-* [TP1_2](https://www.deepmama.com/quizz/dlojz_quizz3.html)
-* [TP2_1](https://www.deepmama.com/quizz/dlojz_quizz4.html)
-* [TP2_2](https://www.deepmama.com/quizz/dlojz_quizz5.html)
+
+Des quizz sont proposés pendant la formation pour valider l'avancée du cours. Pour participer : http://localhost:3000/
 
 ### Videos DP et ZeRODP
 * [Animations parallélisme](https://www.youtube.com/playlist?list=PLQd0PPHfzSeJ-gBR8RNfmEEE2ZMBhRb1B)
