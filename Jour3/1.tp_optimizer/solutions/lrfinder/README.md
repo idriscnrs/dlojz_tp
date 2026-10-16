@@ -41,9 +41,9 @@ By following the rule "*The best learning rate value should be* ***one order of 
 
 For a low *weight decay* value (`wd=1e-4`), the *best learning rate* is the highest (`lr=1e-2`) regardless of the other parameters.
 
-For a high *weight decay* value (`wd=1e-1`), the *best learning rate* depends on the *batch size*: `lr=1e-3` for a large batch size (`batch size=8192`) while `lr=1e-4` for a small batch size (`batch size=256`).
+For a high *weight decay* value (`wd=1e-1`), the *best learning rate* depends on the *batch size*: `lr=1e-3` for a large batch size (`bs=8192`) while `lr=1e-4` for a small batch size (`bs=256`).
 
-The momentum does not impact the results.
+The *momentum* does not impact the results.
 
 
 **IMPORTANT**: These results can be considered as a rule of thumb for the specific context of this study (ResNet-18/CIFAR-10) but **should not be generalized**.
