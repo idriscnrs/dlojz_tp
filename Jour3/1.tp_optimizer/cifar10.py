@@ -13,29 +13,21 @@ import torchvision.models as models
 import torchvision.transforms as transforms
 
 # Specific module imports
-from apex.parallel.LARC import LARC
 from dlojz_chrono import Chronometer
 from lion import Lion
-import apex
 import idr_torch
 
 # Specific torch imports
-from torch.cuda.amp import autocast, GradScaler
+from torch.amp import autocast, GradScaler
 from torch.nn.parallel import DistributedDataParallel
 from torch.profiler import profile, tensorboard_trace_handler, ProfilerActivity, schedule
 from torchmetrics.classification import Accuracy
 
 VAL_BATCH_SIZE=512
 
-# Fix random seeds
-random.seed(123)                           
-np.random.seed(123)
-torch.manual_seed(123) 
-
-
 def main():
     parser = argparse.ArgumentParser()                                 
-    parser.add_argument('-b', '--batch-size', default=128, type =int,  
+    parser.add_argument('-b', '--batch-size', default=8192, type =int,  
                         help='Batch size per GPU')                     
     parser.add_argument('-e','--epochs', default=1, type=int,          
                         help='Number of total epochs to run')          
@@ -53,7 +45,7 @@ def main():
                         help='Save last checkpoint')
     args = parser.parse_args()
     train(args)
-    
+
 
 def train(args):
     
@@ -103,7 +95,7 @@ def train(args):
         print(f'Optimizer: {wrapped_optimizer}')    
         
     # Define GradScaler for AMP
-    scaler = GradScaler()
+    scaler = GradScaler('cuda')
         
      
     ######  DATALOADER ######
@@ -196,7 +188,7 @@ def train(args):
 
             wrapped_optimizer.zero_grad()
             # Runs the forward pass with autocasting.
-            with autocast():
+            with autocast('cuda'):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
 
@@ -241,7 +233,7 @@ def train(args):
 
                     # Runs the forward pass with no grade mode.
                     with torch.no_grad():
-                        with autocast():
+                        with autocast('cuda'):
                             val_outputs = model(val_images)
                             loss = criterion(val_outputs, val_labels)
 
