@@ -44,13 +44,6 @@ For a high *weight decay* value (`wd=1e-1`), the *best learning rate* depends on
 
 The *momentum* does not impact the results.
 
-## Interpretation
-The higher the *weight decay*, the faster we force the training to converge. As a trade-off, we need to be more confident about the direction we follow when performing a gradient descent step. This translates into a lower *learning rate*, especially with a small *batch size*, when the direction is computed based on fewer samples (less information).
-
-Conversely, a low *weight decay* has less impact on the convergence speed. We can explore directions with greater confidence, using a higher *learning rate*.
-
-
-
 **IMPORTANT**: These results can be considered as a rule of thumb for the specific context of this study (ResNet-18/CIFAR-10) but **should not be generalized**.
 
 
