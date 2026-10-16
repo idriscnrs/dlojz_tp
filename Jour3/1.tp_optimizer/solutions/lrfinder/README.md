@@ -37,13 +37,17 @@ By following the rule "*The best learning rate value should be* ***one order of 
 | sgd	| 8192	| 0.8	| **1.00E-04**	| 1.00E-02 | 
 | sgd	| 8192	| 0.9	| **1.00E-04**	| 1.00E-02 | 
 
-## Conclusion
 
 For a low *weight decay* value (`wd=1e-4`), the *best learning rate* is the highest (`lr=1e-2`) regardless of the other parameters.
 
 For a high *weight decay* value (`wd=1e-1`), the *best learning rate* depends on the *batch size*: `lr=1e-3` for a large batch size (`bs=8192`) while `lr=1e-4` for a small batch size (`bs=256`).
 
 The *momentum* does not impact the results.
+
+## Interpretation
+The highest the *weight decay* is, the faster we force the training to converge. As a counterpart, we need to be more confident with regard to the direction we follow when performing a gradient descent step. This translates into a lower *learning rate*, especially in the case of a small *batch size*, when the direction is computed based on a smaller amount of information (less samples).
+
+On the opposite, a low *weight decay* has less impact on the convergence speed. We can explore directions with more confidence, with a higher *learning rate*. 
 
 
 **IMPORTANT**: These results can be considered as a rule of thumb for the specific context of this study (ResNet-18/CIFAR-10) but **should not be generalized**.
