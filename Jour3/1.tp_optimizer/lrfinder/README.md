@@ -16,7 +16,7 @@ The best learning rate value should be **one order of magnitude lower than the o
 
 This idea comes from the paper by Smith: [Cyclical Learning Rates for Training Neural Networks (2017)](https://arxiv.org/pdf/1506.01186).
 
-The algorithm implemented here comes from Grugger's post: [How Do You Find a Good Learning Rate? (2018)](https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html).
+The algorithm implemented here comes from Gugger's post: [How Do You Find a Good Learning Rate? (2018)](https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html).
 
 
 ## Context
@@ -27,12 +27,12 @@ The algorithm implemented here comes from Grugger's post: [How Do You Find a Goo
 ## Usage
 
 ### Generate a CSV file containing the loss values for a series of learning rates
+
 ```sh
-python cifar10_Grugger_lrfinder.py \
-				--nepochs 100 \
-				--batch-size 256 \
-				--optim 'SGD' \
-				--min-lr 1e-5 \
+python cifar10_Gugger_lrfinder.py --nepochs 100 \
+				--batch-size 8192 \
+				--optim 'AdamW' \
+				--min-lr 1e-4 \
 				--max-lr 1e0 \
 				--mom 0.9 \
 				--wd 0.0
