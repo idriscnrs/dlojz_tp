@@ -1,13 +1,13 @@
 #######################################################################
-### LR Finder algorithm based on Grugger's script using smoothed loss: 
-### https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html
-### Method based on Smith's paper (2017): 
-### https://arxiv.org/pdf/1506.01186
-###
-### This script is part of the IDRIS 'DLO-JZ' course
-### Author MP
-### Date October 2026
-#######################################################################
+# ## LR Finder algorithm based on Gugger's script using smoothed loss: 
+# ## https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html
+# ## Method based on Smith's paper (2017): 
+# ## https://arxiv.org/pdf/1506.01186
+# ##
+# ## This script is part of the IDRIS 'DLO-JZ' course
+# ## Author MP
+# ## Date October 2026
+# ######################################################################
 import argparse
 import os
 import sys
@@ -159,8 +159,9 @@ def train(args):
 
 
     #### WRITE CSV #################
+    folder = f"lrfinder/"
     filename = f"lrfinder_optim{args.optim}_bs{args.batch_size}_minlr{args.min_lr}_maxlr{args.max_lr}_mom{args.mom}_wd{args.wd}_nepochs{args.nepochs}_{os.environ['SLURM_JOBID']}.csv"
-    with open(filename , 'w', newline='') as myfile:
+    with open(folder+filename , 'w', newline='') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(log_lrs)
         wr.writerow(losses)
