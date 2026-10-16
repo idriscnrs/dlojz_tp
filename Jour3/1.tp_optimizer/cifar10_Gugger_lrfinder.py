@@ -1,13 +1,13 @@
 #######################################################################
-### LR Finder algorithm based on Gugger's script using smoothed loss: 
-### https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html
-### Method based on Smith's paper (2017): 
-### https://arxiv.org/pdf/1506.01186
-###
-### This script is part of the IDRIS 'DLO-JZ' course
-### Author MP
-### Date October 2026
-#######################################################################
+# ## LR Finder algorithm based on Gugger's script using smoothed loss: 
+# ## https://sgugger.github.io/how-do-you-find-a-good-learning-rate.html
+# ## Method based on Smith's paper (2017): 
+# ## https://arxiv.org/pdf/1506.01186
+# ##
+# ## This script is part of the IDRIS 'DLO-JZ' course
+# ## Author MP
+# ## Date October 2026
+# ######################################################################
 import argparse
 import os
 import sys
