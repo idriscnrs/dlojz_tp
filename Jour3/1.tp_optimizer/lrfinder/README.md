@@ -9,7 +9,7 @@ The idea is to start training the model by progressively increasing the learning
 The best learning rate value should be **one order of magnitude lower than the one corresponding to the minimum loss value**.
 
 ![Extract from Guggers'post](img/guggers_lrfinder.png)
-<center><em>Extract from Guggers'post</em></center>
+<center><em>Extract from Gugger's post</em></center>
 
 
 ## Credits 
