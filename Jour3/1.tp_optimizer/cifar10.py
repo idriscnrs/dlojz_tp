@@ -86,13 +86,12 @@ def train(args):
     
     # Define optimizer
     optimizer = torch.optim.SGD(model.parameters(), args.lr, momentum=args.mom, weight_decay=args.wd)
-    wrapped_optimizer = optimizer
     
     # Distribute model
     model = DistributedDataParallel(model, device_ids=[idr_torch.local_rank])
 
     if idr_torch.rank == 0: 
-        print(f'Optimizer: {wrapped_optimizer}')    
+        print(f'Optimizer: {optimizer}')    
         
     # Define GradScaler for AMP
     scaler = GradScaler('cuda')
@@ -152,9 +151,7 @@ def train(args):
     N_batch = len(train_loader)
     N_val_batch = len(val_loader)
     N_val = len(val_dataset)
-    
-    scheduler = torch.optim.lr_scheduler.ConstantLR(optimizer, factor=1, total_iters=5)
-    
+        
     chrono.start()                                  
     
     ## Initialisation accuracy log 
@@ -184,7 +181,7 @@ def train(args):
 
             chrono.forward()
 
-            wrapped_optimizer.zero_grad()
+            optimizer.zero_grad()
             # Runs the forward pass with autocasting.
             with autocast('cuda'):
                 outputs = model(images)
@@ -193,7 +190,7 @@ def train(args):
             chrono.backward()
 
             scaler.scale(loss).backward()
-            scaler.step(wrapped_optimizer)
+            scaler.step(optimizer)
             scaler.update()
 
             # Torchmetrics
@@ -209,8 +206,7 @@ def train(args):
                       epoch + 1, args.epochs, i+1, N_batch, loss.item(),train_acc))                             
                 accuracies = []                             
 
-            # scheduler update
-            scheduler.step()                           
+                       
                                                             
             #### VALIDATION ############                    
             if (((i+1)%(N_batch//2)==0) or (args.test and i==49)):
@@ -247,7 +243,10 @@ def train(args):
                     print('##EVALUATION STEP##')                   
                     print('Epoch [{}/{}], Validation Loss: {:.4f}, Validation Accuracy: {:.4f}'.format(epoch + 1, args.epochs,
                     val_loss.item(), val_acc))
-                    print('Learning Rate: {:.4f}'.format(scheduler.get_last_lr()[0]))
+                    try:
+                        print('Learning Rate: {:.4f}'.format(scheduler.get_last_lr()[0]))
+                    except NameError:
+                        print('Learning Rate: {:.4f}'.format(args.lr))
                     print(">>> Validation complete in: " + str(chrono.val_time))    
 
                 ## Clear val_loss
@@ -265,7 +264,7 @@ def train(args):
     dist.barrier()
     chrono.stop()                 
     if idr_torch.rank == 0:
-        chrono.display(N_val_batch)
+        chrono.display()
         print(">>> Number of batch per epoch: {}".format(N_batch)) 
         print(f'Max Memory Allocated {torch.cuda.max_memory_allocated()} Bytes') 
         
