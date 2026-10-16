@@ -615,6 +615,10 @@ def comm_profiler(jobid, n_display=None, zoom=False):
                 break
     
     comm_rank = {} # Stores the global rank for the comm signature
+    # Initialize the current step for every rank before parsing the log.
+    # Some logs may contain "Train step" lines before the first
+    # "Init COMPLETE" line (or may not contain that marker at all).
+    steps = ['init.'] * n_rank
 
     with open(log_out, "r") as f:
         for line in f:
@@ -624,7 +628,6 @@ def comm_profiler(jobid, n_display=None, zoom=False):
                 # That way we can map a comm to a rank easily
                 trace = line.split()
                 comm_rank[trace[6]] = int(trace[8]) 
-                steps = ['init.']*n_rank
                 
             elif "Train step" in line:
                 step = int(line.split()[2])
