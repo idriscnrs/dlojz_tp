@@ -171,8 +171,8 @@ def train(args):
     for epoch in range(args.epochs):    
         
         train_sampler.set_epoch(epoch)
-        chrono.dataload()                                   
-                                                             
+        chrono.next_iter()
+        if idr_torch.rank == 0: chrono.tac_time(clear=True)
         for i, (images, labels) in enumerate(train_loader):
             model.train()                                                
             csteps = i + 1 + epoch * N_batch                
@@ -182,8 +182,6 @@ def train(args):
             images = images.to(gpu, non_blocking=True, memory_format=torch.channels_last)
             labels = labels.to(gpu, non_blocking=True)
 
-            chrono.dataload()
-            chrono.training()
             chrono.forward()
 
             wrapped_optimizer.zero_grad()
@@ -192,8 +190,7 @@ def train(args):
                 outputs = model(images)
                 loss = criterion(outputs, labels)
 
-            chrono.forward()
-            chrono.backward()     
+            chrono.backward()
 
             scaler.scale(loss).backward()
             scaler.step(wrapped_optimizer)
@@ -205,8 +202,7 @@ def train(args):
             train_acc = train_metric_acc.compute() #sync all rank
             train_metric_acc.reset()               #reset
             
-            chrono.backward()
-            chrono.training()
+            chrono.update()
 
             if idr_torch.rank == 0:
                 print('Epoch [{}/{}], Step [{}/{}], Loss: {:.4f}, Acc:{:.4f}'.format(
@@ -214,14 +210,13 @@ def train(args):
                 accuracies = []                             
 
             # scheduler update
-            scheduler.step()
-
-            chrono.dataload()                               
+            scheduler.step()                           
                                                             
             #### VALIDATION ############                    
-            if (((i+1)%(N_batch//2)==0) or (args.test and i==49)):                                    
-                model.eval()                                
+            if (((i+1)%(N_batch//2)==0) or (args.test and i==49)):
+                
                 chrono.validation()
+                model.eval() 
                 
                 for iv, (val_images, val_labels) in enumerate(val_loader): 
                     
@@ -247,8 +242,7 @@ def train(args):
                 valid_metric_acc.reset()             #reset
                 val_loss /= iv                       #loss mean on iv
 
-                chrono.validation()                                
-                                                                   
+                chrono.validation()                                                                    
                 if not args.test and idr_torch.rank == 0:          
                     print('##EVALUATION STEP##')                   
                     print('Epoch [{}/{}], Validation Loss: {:.4f}, Validation Accuracy: {:.4f}'.format(epoch + 1, args.epochs,
@@ -258,16 +252,20 @@ def train(args):
 
                 ## Clear val_loss
                 val_loss -= val_loss
-                     
+                
+            #### END OF VALIDATION ############
+            
+            chrono.next_iter()
+                    
         # Torchmetrics epoch reset
         train_metric_acc.reset()
         valid_metric_acc.reset()
             
     ## Be sure all process finish at the same time to avoid incoherent logs at the end of process !
     dist.barrier()
-                                  
-    chrono.display(N_val_batch)
+    chrono.stop()                 
     if idr_torch.rank == 0:
+        chrono.display(N_val_batch)
         print(">>> Number of batch per epoch: {}".format(N_batch)) 
         print(f'Max Memory Allocated {torch.cuda.max_memory_allocated()} Bytes') 
         

@@ -62,7 +62,9 @@ class Chronometer:
             
     chrono.stop()
     """
-    def __init__(self):
+    def __init__(self, test=True, rank=0):
+        self.test = test
+        self.rank = rank
         self.time_perf_train = []
         self.time_perf_load = []
         self.time_perf_forward = []
@@ -80,7 +82,7 @@ class Chronometer:
         nvmlInit()
         
     def power_measurement(self):
-        self.power.append(nvmlDeviceGetPowerUsage(nvmlDeviceGetHandleByIndex(0))/1000)
+        if self.rank==0: self.power.append(nvmlDeviceGetPowerUsage(nvmlDeviceGetHandleByIndex(0))/1000)
     
     def tac_time(self, clear=False):
         if self.time_point == None or clear:
@@ -98,34 +100,39 @@ class Chronometer:
         self.time_perf_backward = []
         
     def start(self):
-        self.start_proc = datetime.now()
+        if self.rank == 0: self.start_proc = datetime.now()
     
     def stop(self):
         self.stop_proc = datetime.now()
         nvmlShutdown()
+
     def _dataload(self):
-        if self.start_dataload==None: self.start_dataload = time()
-        else:
-            self.time_perf_load.append(time() - self.start_dataload)
-            self.start_dataload = None
+        if self.rank == 0 and self.test:
+            if self.start_dataload==None: self.start_dataload = time()
+            else:
+                self.time_perf_load.append(time() - self.start_dataload)
+                self.start_dataload = None
                 
     def _training(self):
-        if self.start_training==None: self.start_training = time()
-        else:
-            self.time_perf_train.append(time() - self.start_training)
-            self.start_training = None
+        if self.rank == 0 and self.test:
+            if self.start_training==None: self.start_training = time()
+            else:
+                self.time_perf_train.append(time() - self.start_training)
+                self.start_training = None
                 
     def _forward(self):
-        if self.start_forward==None: self.start_forward = time()
-        else:
-            self.time_perf_forward.append(time() - self.start_forward)
-            self.start_forward = None
+        if self.rank == 0 and self.test:
+            if self.start_forward==None: self.start_forward = time()
+            else:
+                self.time_perf_forward.append(time() - self.start_forward)
+                self.start_forward = None
                 
     def _backward(self):
-        if self.start_backward==None: self.start_backward = time()
-        else:
-            self.time_perf_backward.append(time() - self.start_backward)
-            self.start_backward = None
+        if self.rank == 0 and self.test:
+            if self.start_backward==None: self.start_backward = time()
+            else:
+                self.time_perf_backward.append(time() - self.start_backward)
+                self.start_backward = None
                 
     def next_iter(self):
         self._dataload()
@@ -145,21 +152,24 @@ class Chronometer:
         self._training()
                 
     def validation(self):
-        if self.start_valid==None: self.start_valid = datetime.now()
-        else: 
-            self.val_time = datetime.now() - self.start_valid
-            self.start_valid = None
+        if self.rank == 0:
+            if self.start_valid==None: self.start_valid = datetime.now()
+            else: 
+                self.val_time = datetime.now() - self.start_valid
+                self.start_valid = None
                 
     def display(self):
-        if self.stop_proc and self.start_proc: print(">>> Training complete in: " + str(self.stop_proc - self.start_proc))
-        if len(self.time_perf_train) > 0: print(">>> Training performance time: min {} avg {} seconds (+/- {})".format(np.min(self.time_perf_train[1:]), np.median(self.time_perf_train[1:]), np.std(self.time_perf_train[1:])))
-        if len(self.time_perf_load) > 0: print(">>> Loading performance time: min {} avg {} seconds (+/- {})".format(np.min(self.time_perf_load[1:]), np.mean(self.time_perf_load[1:]), np.std(self.time_perf_load[1:])))
-        if len(self.time_perf_forward) > 0: print(">>> Forward performance time: {} seconds (+/- {})".format(np.mean(self.time_perf_forward[1:]), np.std(self.time_perf_forward[1:])))
-        if len(self.time_perf_backward) > 0: print(">>> Backward performance time: {} seconds (+/- {})".format(np.mean(self.time_perf_backward[1:]), np.std(self.time_perf_backward[1:])))
-        if len(self.power) > 0: print(">>> Peak Power during training: {} W)".format(np.max(self.power)))
-        if self.val_time: print(">>> Validation time: {}".format(self.val_time))
-        if len(self.time_perf_train) > 0 and len(self.time_perf_load) > 0:
-            print(f">>> First step loading time: {self.time_perf_load[0]}")
-            print(">>> Sortie trace #####################################" )
-            print(">>>JSON", json.dumps({'GPU process - Forward/Backward':self.time_perf_train, 'CPU process - Dataloader':self.time_perf_load}))
+        if self.rank == 0:
+            if self.stop_proc and self.start_proc: print(">>> Training complete in: " + str(self.stop_proc - self.start_proc))
+        if self.test:
+            if len(self.time_perf_train) > 0: print(">>> Training performance time: min {} avg {} seconds (+/- {})".format(np.min(self.time_perf_train[1:]), np.median(self.time_perf_train[1:]), np.std(self.time_perf_train[1:])))
+            if len(self.time_perf_load) > 0: print(">>> Loading performance time: min {} avg {} seconds (+/- {})".format(np.min(self.time_perf_load[1:]), np.mean(self.time_perf_load[1:]), np.std(self.time_perf_load[1:])))
+            if len(self.time_perf_forward) > 0: print(">>> Forward performance time: {} seconds (+/- {})".format(np.mean(self.time_perf_forward[1:]), np.std(self.time_perf_forward[1:])))
+            if len(self.time_perf_backward) > 0: print(">>> Backward performance time: {} seconds (+/- {})".format(np.mean(self.time_perf_backward[1:]), np.std(self.time_perf_backward[1:])))
+            if len(self.power) > 0: print(">>> Peak Power during training: {} W)".format(np.max(self.power)))
+            if self.val_time: print(">>> Validation time: {}".format(self.val_time))
+            if len(self.time_perf_train) > 0 and len(self.time_perf_load) > 0:
+                print(f">>> First step loading time: {self.time_perf_load[0]}")
+                print(">>> Sortie trace #####################################" )
+                print(">>>JSON", json.dumps({'GPU process - Forward/Backward':self.time_perf_train, 'CPU process - Dataloader':self.time_perf_load}))
                 
