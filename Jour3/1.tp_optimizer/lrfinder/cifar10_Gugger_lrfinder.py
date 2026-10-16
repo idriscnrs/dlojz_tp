@@ -159,8 +159,9 @@ def train(args):
 
 
     #### WRITE CSV #################
+    folder = f"lrfinder/"
     filename = f"lrfinder_optim{args.optim}_bs{args.batch_size}_minlr{args.min_lr}_maxlr{args.max_lr}_mom{args.mom}_wd{args.wd}_nepochs{args.nepochs}_{os.environ['SLURM_JOBID']}.csv"
-    with open(filename , 'w', newline='') as myfile:
+    with open(folder+filename , 'w', newline='') as myfile:
         wr = csv.writer(myfile, quoting=csv.QUOTE_ALL)
         wr.writerow(log_lrs)
         wr.writerow(losses)
