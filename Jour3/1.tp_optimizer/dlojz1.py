@@ -14,7 +14,6 @@ import torchvision.transforms as transforms
 
 # Specific module imports
 from dlojz_chrono import Chronometer
-from lion import Lion
 import idr_torch
 
 # Specific torch imports
