@@ -24,6 +24,7 @@ torch.manual_seed(123)
 ## import ... ## Add here the libraries to import
 from torch.amp import autocast, GradScaler
 from torch.profiler import profile, tensorboard_trace_handler, ProfilerActivity, schedule, record_function
+from contextlib import nullcontext
 
 VAL_BATCH_SIZE=250
 
@@ -179,7 +180,7 @@ def train():
     scheduler = torch.optim.lr_scheduler.OneCycleLR(optimizer, max_lr=args.lr,
                                                 steps_per_epoch=N_batch, epochs=args.epochs)
 
-    prof =  None # TODO: Implement the torch profiler similar to TP1_4
+    prof =  nullcontext() # TODO: Implement the torch profiler similar to TP1_4
     
     chrono.start()                               
     
